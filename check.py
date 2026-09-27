@@ -174,9 +174,10 @@ def check_target(idx: int, t: dict, opens: list, state: dict) -> None:
                 opens.append((idx, ci, co))
     else:
         for ci, co in WANTED_STAYS:
-            v = thankq_sites(t["camp"], ci, co).get(t["site"])
+            sites = thankq_sites(t["camp"], ci, co)
+            v = sites.get(t["site"])
             state[(idx, ci)] = v or "?"
-            log(f"  {t['label'][:24]} {ci[5:]}~{co[5:]} → {v or '사이트 없음'}")
+            log(f"  {t['label'][:24]} {ci[5:]}~{co[5:]} → {v or '사이트 없음: ' + repr(sites)[:600]}")
             if thankq_open(v):
                 opens.append((idx, ci, co))
 
