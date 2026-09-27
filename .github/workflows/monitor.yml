@@ -1,0 +1,44 @@
+name: 빈자리 감시
+
+on:
+  schedule:
+    - cron: "17 * * * *"      # 1시간마다: 감시가 끊겼을 때 다시 켜는 안전장치
+  workflow_dispatch:           # 수동 시작 버튼
+
+permissions:
+  contents: read
+  actions: write               # 끝날 때 다음 실행을 스스로 예약하기 위해 필요
+
+concurrency:
+  group: camp-monitor          # 동시에 하나만 실행
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - name: 빈자리 확인 (약 5시간 30분 동안 90초마다)
+        env:
+          NAVER_MAIL_ID: ${{ secrets.NAVER_MAIL_ID }}
+          NAVER_MAIL_PASSWORD: ${{ secrets.NAVER_MAIL_PASSWORD }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+          BIZ_ID: ${{ vars.BIZ_ID }}
+          ITEM_ID: ${{ vars.ITEM_ID }}
+          SERVICE_ID: ${{ vars.SERVICE_ID }}
+        run: python -u check.py
+      - name: 다음 실행 이어서 시작
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$(TZ=Asia/Seoul date +%F)" \< "2026-10-31" ]; then
+            gh workflow run monitor.yml --repo ${{ github.repository }}
+          else
+            echo "원하는 날짜가 모두 지나 감시를 멈춥니다."
+          fi
