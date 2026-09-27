@@ -122,6 +122,7 @@ def thankq_sites(camp: str, ci: str, co: str) -> dict:
                      data={"campseq": camp, "res_dt": ci.replace("-", ""), "res_edt": co.replace("-", ""),
                            "res_days": str(days), "site_tp": "", "only_able_yn": ""})
     r.raise_for_status()
+    r.encoding = "utf-8"
     out = {}
     for block in r.text.split('class="site_div')[1:]:
         name = re.search(r'class="na">\s*([^<]+?)\s*<', block)
@@ -176,8 +177,10 @@ def check_target(idx: int, t: dict, opens: list, state: dict) -> None:
         for ci, co in WANTED_STAYS:
             sites = thankq_sites(t["camp"], ci, co)
             v = sites.get(t["site"])
-            state[(idx, ci)] = v or "?"
-            log(f"  {t['label'][:24]} {ci[5:]}~{co[5:]} → {v or '사이트 없음: ' + repr(sites)[:600]}")
+            if v is None:
+                raise RuntimeError(f"'{t['site']}' 사이트를 찾지 못함. 목록: {', '.join(sites)}")
+            state[(idx, ci)] = v
+            log(f"  {t['label'][:24]} {ci[5:]}~{co[5:]} → {v}")
             if thankq_open(v):
                 opens.append((idx, ci, co))
 
