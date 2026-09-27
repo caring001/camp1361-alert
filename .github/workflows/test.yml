@@ -24,4 +24,4 @@ jobs:
           BIZ_ID: ${{ vars.BIZ_ID }}
           ITEM_ID: ${{ vars.ITEM_ID }}
           SERVICE_ID: ${{ vars.SERVICE_ID }}
-        run: python -u check.py --test
+        run: python -u check.py --test; python -u debug.py
